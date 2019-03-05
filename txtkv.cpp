@@ -205,7 +205,7 @@ class  TTxtKV {
 
         __int64 line;
         __int64 pevLine=-1;
-        int step=0;
+        step=0;
         __int64 topLine=0;
         __int64 bottomLine=lines_count;
 
@@ -334,6 +334,14 @@ public:
         return 0;
         }
 
+    RSL_GETPROP_DECL(CountSteps) {
+
+        ValueClear (retVal);
+        ValueSet (retVal,V_INTEGER,&step);
+        return 0;
+        }
+
+        
 
 
     RSL_METHOD_DECL(Find) {
@@ -342,7 +350,29 @@ public:
 
         if (findKey(key)) {
             if (count_fields)
-                ValueSet (retVal,V_STRING,resultStr);
+                if (count_fields>1) {
+                    TGenObject * a=RslTArrayCreate (count_fields,1);
+                    int indexElement=0;
+                    char *p=resultStr;
+                    for(int i=0;resultStr[i];i++) {
+                        if (resultStr[i]==separator) {
+                            resultStr[i]='\0';
+                            VALUE * pArrayElement=PushValue(NULL);
+                            ValueSet (pArrayElement,V_STRING,(void *)p); 
+                            RslTArrayPut(a, indexElement++, pArrayElement);
+                            PopValue();
+                            p=resultStr+i+1;
+                            }
+                        }
+                            VALUE * pArrayElement=PushValue(NULL);
+                            ValueSet (pArrayElement,V_STRING,(void *)p); 
+                            RslTArrayPut(a, indexElement++, pArrayElement);
+                            PopValue();
+
+                    ValueSet (retVal,V_GENOBJ,a);
+                    }
+                else
+                    ValueSet (retVal,V_STRING,resultStr);
             else {
                 ret_bool=TRUE;
                 ValueSet (retVal,V_BOOL,&ret_bool);
@@ -372,6 +402,7 @@ private:
     char * strBuff   =NULL;
     char * currentKey=NULL;
     char * resultStr =NULL;
+    int step=0;
     
     __int64 lines_count=0;
 };
@@ -387,6 +418,7 @@ RSL_CLASS_BEGIN(TTxtKV)
     RSL_PROP_METH  (KeyLength)
     RSL_PROP_METH  (CountLines)
     RSL_PROP_METH  (StringLength)
+    RSL_PROP_METH  (CountSteps)
     
 RSL_CLASS_END  
 
